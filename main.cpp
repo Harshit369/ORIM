@@ -44,7 +44,7 @@ int main(int argc, char* argv[])
 		//compute the descriptors for each keypoint
 		detector.compute(input, keypoints,descriptor);		
 		//put the all feature descriptors in a single Mat object 
-		featuresUnclustered.push_back(descriptor);		
+		allfeaturesUnclustered.push_back(descriptor);		
 		//print the percentage
 		printf("%i percent done\n",f/10);
 	}	
