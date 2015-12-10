@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <tchar.h>
 #include <stdio.h>
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
@@ -10,7 +9,7 @@ using namespace std;
 
 //#define DICTIONARY_BUILD 1 // set DICTIONARY_BUILD 1 to do Step 1, otherwise it goes to step 2
 
-int _tmain(int argc, _TCHAR* argv[])
+int main(int argc, char* argv[])
 {	
 //#if DICTIONARY_BUILD == 1
 
@@ -35,9 +34,9 @@ int _tmain(int argc, _TCHAR* argv[])
 	SiftDescriptorExtractor detector;	
 	
 	//I select 20 (1000/50) images from 1000 images to extract feature descriptors and build the vocabulary
-	for(int f=0;f<999;f+=50){		
+	for(int f=0;f<=75;f++){		
 		//create the file name of an image
-		sprintf(filename,"G:\\testimages\\image\\%i.jpg",f);
+		sprintf(filename,"./dataset/training/%i.JPG",f);
 		//open the file
 		input = imread(filename, CV_LOAD_IMAGE_GRAYSCALE); //Load as grayscale				
 		//detect feature points
@@ -51,7 +50,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	}	
 
 
-	//Construct BOWKMeansTrainer
+	/*//Construct BOWKMeansTrainer
 	//the number of bags
 	int dictionarySize=200;
 	//define Term Criteria
@@ -120,6 +119,6 @@ int _tmain(int argc, _TCHAR* argv[])
 	//release the file storage
 	fs1.release();
 #endif
-	printf("\ndone\n");	
+	printf("\ndone\n");	*/
     return 0;
 }
