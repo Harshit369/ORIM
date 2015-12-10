@@ -46,7 +46,7 @@ int main(int argc, char* argv[])
 		//put the all feature descriptors in a single Mat object 
 		allfeaturesUnclustered.push_back(descriptor);		
 		//print the percentage
-		printf("%i percent done\n",f/10);
+		printf("%f percent done\n",f*((float)100/(float)75));
 	}	
 
 
