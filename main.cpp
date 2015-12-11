@@ -28,10 +28,9 @@ int main(int argc, char* argv[])
 
 	Mat scene_descriptor;
 	Mat img_scene = imread( argv[1], CV_LOAD_IMAGE_GRAYSCALE );
-	//detect feature points
-	detector.detect(input, keypoints);
-	//compute the descriptors for each keypoint
-	detector.compute(img_scene, keypoints,scene_descriptor);		
+	if( !img_scene.data ) {
+		cout<< " --(!) Error reading images " << std::endl; return -1; 
+	}		
 
 	//------------------------------------------------
 
@@ -39,7 +38,7 @@ int main(int argc, char* argv[])
 	char * filename = new char[1000];
 
 	//to store the current input image
-	Mat input,
+	Mat input;
 
 	//To store the keypoints that will be extracted by SIFT
 	vector<KeyPoint> keypoints;
@@ -53,13 +52,18 @@ int main(int argc, char* argv[])
 	//The SIFT feature extractor and descriptor
 	SiftDescriptorExtractor detector;
 
+	//detect feature points for scene
+	detector.detect(input, keypoints);
+	//compute the descriptors for each keypoint for scene
+	detector.compute(img_scene, keypoints,scene_descriptor);
+
 	//create a flann based matcher and a match vector to match descriptors and store them
 	FlannBasedMatcher matcher;
 	vector< DMatch > matches;
 	vector<int> match_count;
 	
 	//I select 20 (1000/50) images from 1000 images to extract feature descriptors and build the vocabulary
-	for(int f=0;f<=75;f++){		
+	for(int f=1;f<=75;f++){		
 		//create the file name of an image
 		sprintf(filename,"./dataset/training/%i.JPG",f);
 		//open the file
@@ -67,21 +71,32 @@ int main(int argc, char* argv[])
 		//detect feature points
 		detector.detect(input, keypoints);
 		//compute the descriptors for each keypoint
-		detector.compute(input, keypoints,descriptor);		
+		detector.compute(input, keypoints,descriptor);
+
 		//put the all feature descriptors in a single Mat object 
+		cv::FileStorage fs("descriptors.yml", cv::FileStorage::WRITE);
+		fs << "descriptors" << descriptor;
+		fs << "keypoints" << keypoints;
+		fs.release();
+
 		allfeaturesUnclustered.push_back(descriptor);
+
+		//matcher.match( descriptor, scene_descriptor, matches );
+  		//cout<<matches.size();
 
 		//print the percentage
 		printf("%f percent training done\n",f*((float)100/(float)75));
 	}	
 
-	for(int j=0;j<allfeaturesUnclustered.size();j++){
+	//int descriptor_power_set = allfeaturesUnclustered.size();
+
+	for(int j=0;j < 75;j++){
 
 		//match descriptors
-  		matcher.match( allfeaturesUnclustered[j], scene_descriptor, matches );
-  		match_count.push_back(matches.size());
+  		
+  		//match_count.push_back(matches.size());
 
-  		double max_dist = 0; double min_dist = 100;
+  		//double max_dist = 0; double min_dist = 100;
 	}
 
 	

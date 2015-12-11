@@ -54,6 +54,7 @@ CMakeFiles/main.dir/main.cpp.o: /usr/local/include/opencv2/imgproc/imgproc_c.h
 CMakeFiles/main.dir/main.cpp.o: /usr/local/include/opencv2/imgproc/types_c.h
 CMakeFiles/main.dir/main.cpp.o: /usr/local/include/opencv2/legacy/compat.hpp
 CMakeFiles/main.dir/main.cpp.o: /usr/local/include/opencv2/nonfree/features2d.hpp
+CMakeFiles/main.dir/main.cpp.o: /usr/local/include/opencv2/nonfree/nonfree.hpp
 CMakeFiles/main.dir/main.cpp.o: /usr/local/include/opencv2/objdetect/objdetect.hpp
 CMakeFiles/main.dir/main.cpp.o: /usr/local/include/opencv2/video/tracking.hpp
 

@@ -33,12 +33,12 @@ int main( int argc, char** argv )
   detector.detect( img_scene, keypoints_scene );
 
   //-- Step 2: Calculate descriptors (feature vectors)
-  SiftDescriptorExtractor extractor;
+  //SiftDescriptorExtractor extractor;
 
   Mat descriptors_object, descriptors_scene;
 
-  extractor.compute( img_object, keypoints_object, descriptors_object );
-  extractor.compute( img_scene, keypoints_scene, descriptors_scene );
+  detector.compute( img_object, keypoints_object, descriptors_object );
+  detector.compute( img_scene, keypoints_scene, descriptors_scene );
 
   //-- Step 3: Matching descriptor vectors using FLANN matcher
   FlannBasedMatcher matcher;
