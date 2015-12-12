@@ -41,7 +41,7 @@ int main(int argc, char* argv[])
 	Mat input;
 
 	//To store the keypoints that will be extracted by SIFT
-	vector<KeyPoint> keypoints;
+	vector<KeyPoint> keypoints,keypoints_scene;
 
 	//To store the SIFT descriptor of current image
 	Mat descriptor;
@@ -53,14 +53,15 @@ int main(int argc, char* argv[])
 	SiftDescriptorExtractor detector;
 
 	//detect feature points for scene
-	detector.detect(input, keypoints);
+	detector.detect(img_scene, keypoints_scene);
 	//compute the descriptors for each keypoint for scene
-	detector.compute(img_scene, keypoints,scene_descriptor);
+	detector.compute(img_scene, keypoints_scene,scene_descriptor);
 
 	//create a flann based matcher and a match vector to match descriptors and store them
 	FlannBasedMatcher matcher;
 	std::vector< DMatch > matches;
 	vector<int> match_count;
+	int max_match_count = INT_MIN,max_match_index;
 	
 	//I select 20 (1000/50) images from 1000 images to extract feature descriptors and build the vocabulary
 	for(int f=1;f<=75;f++){		
@@ -81,25 +82,27 @@ int main(int argc, char* argv[])
 
 		allfeaturesUnclustered.push_back(descriptor);
 
-		//matcher.match( descriptor, scene_descriptor, matches );
-		int n = (int)matches.size();
-  		cout<<n;
+		matcher.match( descriptor, scene_descriptor, matches );
+		match_count.push_back(matches.size());
+  		
 
 		//print the percentage
 		printf("%f percent training done\n",f*((float)100/(float)75));
-	}	
-
-	//int descriptor_power_set = allfeaturesUnclustered.size();
-
-	for(int j=0;j < 75;j++){
-
-		//match descriptors
-  		
-  		//match_count.push_back(matches.size());
-
-  		//double max_dist = 0; double min_dist = 100;
 	}
 
+	for (int j = 0; j < match_count.size(); j++)
+	{
+		if(match_count[j]>max_match_count){
+			max_match_count = match_count[j];
+			max_match_index = j;
+		}
+	}	
+
+	sprintf(filename,".dataset/training/%i.JPG",max_match_index+1);
+	cout<<filename;
+	Mat read_match = imread( filename, CV_LOAD_IMAGE_GRAYSCALE );
+	namedWindow("Display Image", WINDOW_AUTOSIZE );
+    //imshow("Display Image", read_match);
 	
     return 0;
 }

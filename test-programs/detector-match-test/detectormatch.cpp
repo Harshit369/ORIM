@@ -25,7 +25,7 @@ int main( int argc, char** argv )
   //-- Step 1: Detect the keypoints using SURF Detector
   int minHessian = 400;
 
-  SiftFeatureDetector detector( minHessian );
+  SurfFeatureDetector detector( minHessian );
 
   std::vector<KeyPoint> keypoints_object, keypoints_scene;
 
@@ -33,12 +33,12 @@ int main( int argc, char** argv )
   detector.detect( img_scene, keypoints_scene );
 
   //-- Step 2: Calculate descriptors (feature vectors)
-  //SiftDescriptorExtractor extractor;
+  SurfDescriptorExtractor extractor;
 
   Mat descriptors_object, descriptors_scene;
 
-  detector.compute( img_object, keypoints_object, descriptors_object );
-  detector.compute( img_scene, keypoints_scene, descriptors_scene );
+  extractor.compute( img_object, keypoints_object, descriptors_object );
+  extractor.compute( img_scene, keypoints_scene, descriptors_scene );
 
   //-- Step 3: Matching descriptor vectors using FLANN matcher
   FlannBasedMatcher matcher;
@@ -61,7 +61,7 @@ int main( int argc, char** argv )
   std::vector< DMatch > good_matches;
 
   for( int i = 0; i < descriptors_object.rows; i++ )
-  { if( matches[i].distance < 3*min_dist )
+  { if( matches[i].distance < 2*min_dist )
      { good_matches.push_back( matches[i]); }
   }
 
@@ -92,10 +92,10 @@ int main( int argc, char** argv )
   perspectiveTransform( obj_corners, scene_corners, H);
 
   //-- Draw lines between the corners (the mapped object in the scene - image_2 )
-  line( img_matches, scene_corners[0] + Point2f( img_object.cols, 0), scene_corners[1] + Point2f( img_object.cols, 0), Scalar(0, 255, 0), 4 );
-  line( img_matches, scene_corners[1] + Point2f( img_object.cols, 0), scene_corners[2] + Point2f( img_object.cols, 0), Scalar( 0, 255, 0), 4 );
-  line( img_matches, scene_corners[2] + Point2f( img_object.cols, 0), scene_corners[3] + Point2f( img_object.cols, 0), Scalar( 0, 255, 0), 4 );
-  line( img_matches, scene_corners[3] + Point2f( img_object.cols, 0), scene_corners[0] + Point2f( img_object.cols, 0), Scalar( 0, 255, 0), 4 );
+  //line( img_matches, scene_corners[0] + Point2f( img_object.cols, 0), scene_corners[1] + Point2f( img_object.cols, 0), Scalar(0, 255, 0), 4 );
+  //line( img_matches, scene_corners[1] + Point2f( img_object.cols, 0), scene_corners[2] + Point2f( img_object.cols, 0), Scalar( 0, 255, 0), 4 );
+  //line( img_matches, scene_corners[2] + Point2f( img_object.cols, 0), scene_corners[3] + Point2f( img_object.cols, 0), Scalar( 0, 255, 0), 4 );
+  //line( img_matches, scene_corners[3] + Point2f( img_object.cols, 0), scene_corners[0] + Point2f( img_object.cols, 0), Scalar( 0, 255, 0), 4 );
 
   //-- Show detected matches
   namedWindow("Display Frame",WINDOW_NORMAL);
