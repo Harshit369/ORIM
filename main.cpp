@@ -59,7 +59,7 @@ int main(int argc, char* argv[])
 
 	//create a flann based matcher and a match vector to match descriptors and store them
 	FlannBasedMatcher matcher;
-	vector< DMatch > matches;
+	std::vector< DMatch > matches;
 	vector<int> match_count;
 	
 	//I select 20 (1000/50) images from 1000 images to extract feature descriptors and build the vocabulary
@@ -74,15 +74,16 @@ int main(int argc, char* argv[])
 		detector.compute(input, keypoints,descriptor);
 
 		//put the all feature descriptors in a single Mat object 
-		cv::FileStorage fs("descriptors.yml", cv::FileStorage::WRITE);
+		/*cv::FileStorage fs("descriptors.yml", cv::FileStorage::WRITE);
 		fs << "descriptors" << descriptor;
 		fs << "keypoints" << keypoints;
-		fs.release();
+		fs.release();*/
 
 		allfeaturesUnclustered.push_back(descriptor);
 
 		//matcher.match( descriptor, scene_descriptor, matches );
-  		//cout<<matches.size();
+		int n = (int)matches.size();
+  		cout<<n;
 
 		//print the percentage
 		printf("%f percent training done\n",f*((float)100/(float)75));
