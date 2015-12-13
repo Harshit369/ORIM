@@ -15,9 +15,25 @@ using namespace std;
 //#define DICTIONARY_BUILD 1 // set DICTIONARY_BUILD 1 to do Step 1, otherwise it goes to step 2
 void readme()
 { 
-	cout << " Usage: ./SURF_descriptor <scene_image_path>" << std::endl; 
+	cout << " Usage: ./main <scene_image_path>" << std::endl; 
 }
 
+int find_max3(vector< int > &match_count){
+
+	int max_match_count = INT_MIN,max_match_index;
+
+	for (int j = 0; j < match_count.size(); j++)
+	{
+		if(match_count[j]>max_match_count){
+			max_match_count = match_count[j];
+			max_match_index = j;
+		}
+	}
+
+	match_count[max_match_index]=0;
+
+	return max_match_index;
+}
 
 int main(int argc, char* argv[])
 {	
@@ -36,6 +52,9 @@ int main(int argc, char* argv[])
 
 	//to store the input file names
 	char * filename = new char[1000];
+	char * filename1 = new char[1000];
+	char * filename2 = new char[1000];
+	char * filename3 = new char[1000];
 
 	//to store the current input image
 	Mat input;
@@ -49,19 +68,22 @@ int main(int argc, char* argv[])
 	//To store all the descriptors that are extracted from all the images.
 	Mat allfeaturesUnclustered;
 
+	int minHessian = 400;
+
 	//The SIFT feature extractor and descriptor
-	SiftDescriptorExtractor detector;
+	SiftFeatureDetector detector( minHessian );
+
+	SiftDescriptorExtractor extractor;
 
 	//detect feature points for scene
 	detector.detect(img_scene, keypoints_scene);
 	//compute the descriptors for each keypoint for scene
-	detector.compute(img_scene, keypoints_scene,scene_descriptor);
+	extractor.compute(img_scene, keypoints_scene,scene_descriptor);
 
 	//create a flann based matcher and a match vector to match descriptors and store them
 	FlannBasedMatcher matcher;
 	std::vector< DMatch > matches;
 	vector<int> match_count;
-	int max_match_count = INT_MIN,max_match_index;
 	
 	//I select 20 (1000/50) images from 1000 images to extract feature descriptors and build the vocabulary
 	for(int f=1;f<=75;f++){		
@@ -72,38 +94,32 @@ int main(int argc, char* argv[])
 		//detect feature points
 		detector.detect(input, keypoints);
 		//compute the descriptors for each keypoint
-		detector.compute(input, keypoints,descriptor);
-
-		//put the all feature descriptors in a single Mat object 
-		/*cv::FileStorage fs("descriptors.yml", cv::FileStorage::WRITE);
-		fs << "descriptors" << descriptor;
-		fs << "keypoints" << keypoints;
-		fs.release();*/
+		extractor.compute(input, keypoints,descriptor);
 
 		allfeaturesUnclustered.push_back(descriptor);
 
 		matcher.match( descriptor, scene_descriptor, matches );
 		match_count.push_back(matches.size());
   		
-
 		//print the percentage
 		printf("%f percent training done\n",f*((float)100/(float)75));
 	}
 
-	for (int j = 0; j < match_count.size(); j++)
-	{
-		if(match_count[j]>max_match_count){
-			max_match_count = match_count[j];
-			max_match_index = j;
-		}
-	}	
+	int max_match_index1 = find_max3(match_count);
+	int max_match_index2 = find_max3(match_count);
+	int max_match_index3 = find_max3(match_count);
 
-	sprintf(filename,".dataset/training/%i.JPG",max_match_index+1);
-	cout<<filename;
+
+	sprintf(filename1,".dataset/training/%i.JPG",max_match_index1+1);
+	sprintf(filename2,".dataset/training/%i.JPG",max_match_index2+1);
+	sprintf(filename3,".dataset/training/%i.JPG",max_match_index3+1);
+	cout<<filename1<<"---"<<filename2<<"---"<<filename3;
 	Mat read_match = imread( filename, CV_LOAD_IMAGE_GRAYSCALE );
 	namedWindow("Display Image", WINDOW_AUTOSIZE );
     //imshow("Display Image", read_match);
 	
     return 0;
 }
+
+
 
