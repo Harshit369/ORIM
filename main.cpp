@@ -1,125 +1,135 @@
 #include <stdio.h>
-#include <iostream>
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
-#include <opencv2/core/core.hpp>
-#include <opencv2/features2d/features2d.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/calib3d/calib3d.hpp>
-#include <opencv2/nonfree/nonfree.hpp>
 #include <opencv2/nonfree/features2d.hpp>
 
 using namespace cv;
 using namespace std;
 
-//#define DICTIONARY_BUILD 1 // set DICTIONARY_BUILD 1 to do Step 1, otherwise it goes to step 2
-void readme()
-{ 
-	cout << " Usage: ./main <scene_image_path>" << std::endl; 
-}
-
-int find_max3(vector< int > &match_count){
-
-	int max_match_count = INT_MIN,max_match_index;
-
-	for (int j = 0; j < match_count.size(); j++)
-	{
-		if(match_count[j]>max_match_count){
-			max_match_count = match_count[j];
-			max_match_index = j;
-		}
-	}
-
-	match_count[max_match_index]=0;
-
-	return max_match_index;
-}
+#define DICTIONARY_BUILD 1 // set DICTIONARY_BUILD 1 to do Step 1, otherwise it goes to step 2
 
 int main(int argc, char* argv[])
 {	
-	if( argc != 2 ) { 
-		readme(); 
-		return -1;
-	}
+#if DICTIONARY_BUILD == 1
 
-	Mat scene_descriptor;
-	Mat img_scene = imread( argv[1], CV_LOAD_IMAGE_GRAYSCALE );
-	if( !img_scene.data ) {
-		cout<< " --(!) Error reading images " << std::endl; return -1; 
-	}		
-
-	//------------------------------------------------
+	//Step 1 - Obtain the set of bags of features.
 
 	//to store the input file names
-	char * filename = new char[1000];
-	char * filename1 = new char[1000];
-	char * filename2 = new char[1000];
-	char * filename3 = new char[1000];
-
+	char * filenameplane = new char[100];		
+	char * filenamebike = new char[100];		
 	//to store the current input image
-	Mat input;
+	Mat inputplane,inputbike;	
 
 	//To store the keypoints that will be extracted by SIFT
-	vector<KeyPoint> keypoints,keypoints_scene;
-
+	vector<KeyPoint> keypointsplane,keypointsbike;
 	//To store the SIFT descriptor of current image
-	Mat descriptor;
-
+	Mat descriptorplane,descriptorbike;
 	//To store all the descriptors that are extracted from all the images.
-	Mat allfeaturesUnclustered;
-
-	int minHessian = 400;
-
+	Mat featuresUnclusteredplane,featuresUnclusteredbike;
 	//The SIFT feature extractor and descriptor
-	SiftFeatureDetector detector( minHessian );
-
-	SiftDescriptorExtractor extractor;
-
-	//detect feature points for scene
-	detector.detect(img_scene, keypoints_scene);
-	//compute the descriptors for each keypoint for scene
-	extractor.compute(img_scene, keypoints_scene,scene_descriptor);
-
-	//create a flann based matcher and a match vector to match descriptors and store them
-	FlannBasedMatcher matcher;
-	std::vector< DMatch > matches;
-	vector<int> match_count;
+	SiftDescriptorExtractor detectorplane,detectorbike;	
 	
-	//I select 20 (1000/50) images from 1000 images to extract feature descriptors and build the vocabulary
-	for(int f=1;f<=75;f++){		
+	//I select 75 training images 
+	for(int f=100;f<=800;f+=20){		
 		//create the file name of an image
-		sprintf(filename,"./dataset/training/%i.JPG",f);
+		sprintf(filenameplane,"../dataset/training/airplanes_side/0%i.jpg",f);
+		sprintf(filenamebike,"../dataset/training/motorbikes_side/0%i.jpg",f);
 		//open the file
-		input = imread(filename, CV_LOAD_IMAGE_GRAYSCALE); //Load as grayscale				
+		inputplane = imread(filenameplane, CV_LOAD_IMAGE_GRAYSCALE); //Load as grayscale				
+		inputbike = imread(filenamebike, CV_LOAD_IMAGE_GRAYSCALE);
 		//detect feature points
-		detector.detect(input, keypoints);
+		detectorplane.detect(inputplane, keypointsplane);
+		detectorbike.detect(inputbike, keypointsbike);
 		//compute the descriptors for each keypoint
-		extractor.compute(input, keypoints,descriptor);
-
-		allfeaturesUnclustered.push_back(descriptor);
-
-		matcher.match( descriptor, scene_descriptor, matches );
-		match_count.push_back(matches.size());
-  		
+		detectorplane.compute(inputplane, keypointsplane,descriptorplane);
+		detectorbike.compute(inputbike, keypointsbike,descriptorbike);		
+		//put the all feature descriptors in a single Mat object 
+		featuresUnclusteredplane.push_back(descriptorplane);
+		featuresUnclusteredbike.push_back(descriptorbike);		
 		//print the percentage
-		printf("%f percent training done\n",f*((float)100/(float)75));
-	}
-
-	int max_match_index1 = find_max3(match_count);
-	int max_match_index2 = find_max3(match_count);
-	int max_match_index3 = find_max3(match_count);
+		printf("%i percent done\n",f/10);
+	}	
 
 
-	sprintf(filename1,".dataset/training/%i.JPG",max_match_index1+1);
-	sprintf(filename2,".dataset/training/%i.JPG",max_match_index2+1);
-	sprintf(filename3,".dataset/training/%i.JPG",max_match_index3+1);
-	cout<<filename1<<"---"<<filename2<<"---"<<filename3;
-	Mat read_match = imread( filename, CV_LOAD_IMAGE_GRAYSCALE );
-	namedWindow("Display Image", WINDOW_AUTOSIZE );
-    //imshow("Display Image", read_match);
+	//Construct BOWKMeansTrainer
+	//the number of bags
+	int dictionarySize=200;
+	//define Term Criteria
+	TermCriteria tc(CV_TERMCRIT_ITER,100,0.001);
+	//retries number
+	int retries=1;
+	//necessary flags
+	int flags=KMEANS_PP_CENTERS;
+	//Create the BoW (or BoF) trainer
+	BOWKMeansTrainer bowTrainer(dictionarySize,tc,retries,flags);
+	//cluster the feature vectors
+	Mat dictionaryplane=bowTrainer.cluster(featuresUnclusteredplane);	
+	//store the vocabulary
+	FileStorage fsplane("dictionary.yml", FileStorage::WRITE);
+	fsplane << "plane" << dictionary;
+	fsplane.release();
+
+	Mat dictionarybike=bowTrainer.cluster(featuresUnclusteredbike);	
+	//store the vocabulary
+	FileStorage fsbike("dictionary.yml", FileStorage::WRITE);
+	fsbike << "bike" << dictionary;
+	fsbike.release();
 	
+#else
+	//Step 2 - Obtain the BoF descriptor for given image/video frame. 
+
+    //prepare BOW descriptor extractor from the dictionary    
+	Mat dictionary; 
+	FileStorage fs("dictionary.yml", FileStorage::READ);
+	fs["vocabulary"] >> dictionary;
+	fs.release();	
+    
+	//create a nearest neighbor matcher
+	Ptr<DescriptorMatcher> matcher(new FlannBasedMatcher);
+	//create Sift feature point extracter
+	Ptr<FeatureDetector> detector(new SiftFeatureDetector());
+	//create Sift descriptor extractor
+	Ptr<DescriptorExtractor> extractor(new SiftDescriptorExtractor);	
+	//create BoF (or BoW) descriptor extractor
+	BOWImgDescriptorExtractor bowDE(extractor,matcher);
+	//Set the dictionary with the vocabulary we created in the first step
+	bowDE.setVocabulary(dictionary);
+
+	//To store the image file name
+	char * filename = new char[100];
+	//To store the image tag name - only for save the descriptor in a file
+	char * imageTag = new char[10];
+
+	//open the file to write the resultant descriptor
+	FileStorage fs1("descriptor.yml", FileStorage::WRITE);	
+	
+	//the image file with the location. 
+	sprintf(filename,"./128.JPG");		
+	//read the image
+	Mat img=imread(filename,CV_LOAD_IMAGE_GRAYSCALE);		
+	//To store the keypoints that will be extracted by SIFT
+	vector<KeyPoint> keypoints;		
+	//Detect SIFT keypoints (or feature points)
+	detector->detect(img,keypoints);
+	//To store the BoW (or BoF) representation of the image
+	Mat bowDescriptor;		
+	//extract BoW (or BoF) descriptor from given image
+	bowDE.compute(img,keypoints,bowDescriptor);
+
+	//prepare the yml (some what similar to xml) file
+	sprintf(imageTag,"img1");			
+	//write the new BoF descriptor to the file
+	fs1 << imageTag << bowDescriptor;
+	//release the file storage
+	fs1.release();	
+
+	//You may use this descriptor for classifying the image.
+	Mat image_yml_descriptor; 
+	FileStorage fs2("descriptor.yml", FileStorage::READ);
+	fs2["img1"] >> image_yml_descriptor;
+	fs2.release();
+	imshow( "Display Frame", image_yml_descriptor );
+#endif
+	printf("\ndone\n");	
     return 0;
 }
-
-
-

@@ -25,7 +25,7 @@ int main( int argc, char** argv )
   //-- Step 1: Detect the keypoints using SURF Detector
   int minHessian = 400;
 
-  SiftFeatureDetector detector( minHessian );
+  SiftFeatureDetector detector;
 
   std::vector<KeyPoint> keypoints_object, keypoints_scene;
 
