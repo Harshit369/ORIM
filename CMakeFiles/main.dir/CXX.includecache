@@ -9,21 +9,9 @@
 /home/harshit/ORIM/main.cpp
 stdio.h
 -
-iostream
--
 opencv/cv.h
 -
 opencv/highgui.h
--
-opencv2/core/core.hpp
--
-opencv2/features2d/features2d.hpp
--
-opencv2/highgui/highgui.hpp
--
-opencv2/calib3d/calib3d.hpp
--
-opencv2/nonfree/nonfree.hpp
 -
 opencv2/nonfree/features2d.hpp
 -
@@ -685,10 +673,6 @@ string.h
 /usr/local/include/opencv2/nonfree/features2d.hpp
 opencv2/features2d/features2d.hpp
 /usr/local/include/opencv2/nonfree/opencv2/features2d/features2d.hpp
-
-/usr/local/include/opencv2/nonfree/nonfree.hpp
-opencv2/nonfree/features2d.hpp
-/usr/local/include/opencv2/nonfree/opencv2/nonfree/features2d.hpp
 
 /usr/local/include/opencv2/objdetect/objdetect.hpp
 opencv2/core/core.hpp

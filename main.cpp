@@ -6,7 +6,7 @@
 using namespace cv;
 using namespace std;
 
-#define DICTIONARY_BUILD 1 // set DICTIONARY_BUILD 1 to do Step 1, otherwise it goes to step 2
+#define DICTIONARY_BUILD 0 // set DICTIONARY_BUILD 1 to do Step 1, otherwise it goes to step 2
 
 int main(int argc, char* argv[])
 {	
@@ -30,10 +30,10 @@ int main(int argc, char* argv[])
 	SiftDescriptorExtractor detectorplane,detectorbike;	
 	
 	//I select 75 training images 
-	for(int f=100;f<=800;f+=20){		
+	for(int f=100;f<=800;f+=10){		
 		//create the file name of an image
-		sprintf(filenameplane,"../dataset/training/airplanes_side/0%i.jpg",f);
-		sprintf(filenamebike,"../dataset/training/motorbikes_side/0%i.jpg",f);
+		sprintf(filenameplane,"./dataset/training/airplanes_side/0%i.jpg",f);
+		sprintf(filenamebike,"./dataset/training/motorbikes_side/0%i.jpg",f);
 		//open the file
 		inputplane = imread(filenameplane, CV_LOAD_IMAGE_GRAYSCALE); //Load as grayscale				
 		inputbike = imread(filenamebike, CV_LOAD_IMAGE_GRAYSCALE);
@@ -62,27 +62,32 @@ int main(int argc, char* argv[])
 	int flags=KMEANS_PP_CENTERS;
 	//Create the BoW (or BoF) trainer
 	BOWKMeansTrainer bowTrainer(dictionarySize,tc,retries,flags);
-	//cluster the feature vectors
+	//cluster the feature vectors for plane
 	Mat dictionaryplane=bowTrainer.cluster(featuresUnclusteredplane);	
 	//store the vocabulary
-	FileStorage fsplane("dictionary.yml", FileStorage::WRITE);
-	fsplane << "plane" << dictionary;
+	FileStorage fsplane("dictionaryplane.yml", FileStorage::WRITE);
+	fsplane << "plane" << dictionaryplane;
 	fsplane.release();
 
+	//cluster the feature vectors for bike
 	Mat dictionarybike=bowTrainer.cluster(featuresUnclusteredbike);	
 	//store the vocabulary
-	FileStorage fsbike("dictionary.yml", FileStorage::WRITE);
-	fsbike << "bike" << dictionary;
+	FileStorage fsbike("dictionarybike.yml", FileStorage::WRITE);
+	fsbike << "bike" << dictionarybike;
 	fsbike.release();
 	
 #else
 	//Step 2 - Obtain the BoF descriptor for given image/video frame. 
 
     //prepare BOW descriptor extractor from the dictionary    
-	Mat dictionary; 
-	FileStorage fs("dictionary.yml", FileStorage::READ);
-	fs["vocabulary"] >> dictionary;
+	Mat dictionaryplane,dictionarybike; 
+	FileStorage fs("dictionaryplane.yml", FileStorage::READ);
+	fs["vocabulary"] >> dictionaryplane;
 	fs.release();	
+
+	FileStorage fs1("dictionarybike.yml", FileStorage::READ);
+	fs1["vocabulary"] >> dictionarybike;
+	fs1.release();	
     
 	//create a nearest neighbor matcher
 	Ptr<DescriptorMatcher> matcher(new FlannBasedMatcher);
