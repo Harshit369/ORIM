@@ -6,7 +6,7 @@
 using namespace cv;
 using namespace std;
 
-#define DICTIONARY_BUILD 0 // set DICTIONARY_BUILD 1 to do Step 1, otherwise it goes to step 2
+#define DICTIONARY_BUILD 1 // set DICTIONARY_BUILD 1 to do Step 1, otherwise it goes to step 2
 
 int main(int argc, char* argv[])
 {	
@@ -25,7 +25,7 @@ int main(int argc, char* argv[])
 	//To store the SIFT descriptor of current image
 	Mat descriptorplane,descriptorbike;
 	//To store all the descriptors that are extracted from all the images.
-	Mat featuresUnclusteredplane,featuresUnclusteredbike;
+	Mat allfeaturesUnclustered;
 	//The SIFT feature extractor and descriptor
 	SiftDescriptorExtractor detectorplane,detectorbike;	
 	
@@ -44,8 +44,9 @@ int main(int argc, char* argv[])
 		detectorplane.compute(inputplane, keypointsplane,descriptorplane);
 		detectorbike.compute(inputbike, keypointsbike,descriptorbike);		
 		//put the all feature descriptors in a single Mat object 
-		featuresUnclusteredplane.push_back(descriptorplane);
-		featuresUnclusteredbike.push_back(descriptorbike);		
+
+		allfeaturesUnclustered.push_back(descriptorplane);		
+		allfeaturesUnclustered.push_back(descriptorbike);		
 		//print the percentage
 		printf("%i percent done\n",f/10);
 	}	
@@ -62,32 +63,23 @@ int main(int argc, char* argv[])
 	int flags=KMEANS_PP_CENTERS;
 	//Create the BoW (or BoF) trainer
 	BOWKMeansTrainer bowTrainer(dictionarySize,tc,retries,flags);
-	//cluster the feature vectors for plane
-	Mat dictionaryplane=bowTrainer.cluster(featuresUnclusteredplane);	
-	//store the vocabulary
-	FileStorage fsplane("dictionaryplane.yml", FileStorage::WRITE);
-	fsplane << "plane" << dictionaryplane;
-	fsplane.release();
 
-	//cluster the feature vectors for bike
-	Mat dictionarybike=bowTrainer.cluster(featuresUnclusteredbike);	
+
+	//cluster the feature vectors for all training set
+	Mat dictionaryplane=bowTrainer.cluster(allfeaturesUnclustered);	
 	//store the vocabulary
-	FileStorage fsbike("dictionarybike.yml", FileStorage::WRITE);
-	fsbike << "bike" << dictionarybike;
-	fsbike.release();
-	
+	FileStorage fs("dictionary.yml", FileStorage::WRITE);
+	fs << "descriptors" << dictionary;
+	fs.release();
+
 #else
 	//Step 2 - Obtain the BoF descriptor for given image/video frame. 
 
     //prepare BOW descriptor extractor from the dictionary    
-	Mat dictionaryplane,dictionarybike; 
-	FileStorage fs("dictionaryplane.yml", FileStorage::READ);
-	fs["vocabulary"] >> dictionaryplane;
+	Mat dictionary; 
+	FileStorage fs("dictionary.yml", FileStorage::READ);
+	fs["vocabulary"] >> dictionary;
 	fs.release();	
-
-	FileStorage fs1("dictionarybike.yml", FileStorage::READ);
-	fs1["vocabulary"] >> dictionarybike;
-	fs1.release();	
     
 	//create a nearest neighbor matcher
 	Ptr<DescriptorMatcher> matcher(new FlannBasedMatcher);
