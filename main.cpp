@@ -3,6 +3,7 @@
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 #include <opencv2/nonfree/features2d.hpp>
+#include <opencv2/ml/ml.hpp>
 
 using namespace cv;
 using namespace std;
@@ -67,10 +68,10 @@ int main(int argc, char* argv[])
 
 
 	//cluster the feature vectors for all training set
-	Mat dictionaryplane=bowTrainer.cluster(allfeaturesUnclustered);	
+	Mat dictionarywrite = bowTrainer.cluster(allfeaturesUnclustered);	
 	//store the vocabulary
 	FileStorage fs("dictionary.yml", FileStorage::WRITE);
-	fs << "descriptors" << dictionary;
+	fs << "descriptors" << dictionarywrite;
 	fs.release();
 
 	//Step 2 - Obtain the BoF descriptor for given image and train svm according to it. 
@@ -110,13 +111,13 @@ int main(int argc, char* argv[])
 		sprintf(filenameplane,"./dataset/training/airplanes_side/0%i.jpg",f);
    		img = imread(filenameplane);
    		detector->detect(img,keypoints);
-   		bowide.compute(img, keypoints, response_hist);
+   		bowide->compute(img, keypoints, response_hist);
 
-    	if(classes_training_data.count('plane') == 0) { //not yet created...
-        	classes_training_data['plane'].create(0,response_hist.cols,response_hist.type());
-        	classes_names.push_back('plane');
+    	if(classes_training_data.count("plane") == 0) { //not yet created...
+        	classes_training_data["plane"].create(0,response_hist.cols,response_hist.type());
+        	classes_names.push_back("plane");
       	}
-      	classes_training_data['plane'].push_back(response_hist);
+      	classes_training_data["plane"].push_back(response_hist);
    		//total_samples++;
 	}
 
@@ -125,13 +126,13 @@ int main(int argc, char* argv[])
 		sprintf(filenamebike,"./dataset/training/motorbikes_side/0%i.jpg",f);
    		img = imread(filenamebike);
    		detector->detect(img,keypoints);
-   		bowide.compute(img, keypoints, response_hist);
+   		bowide->compute(img, keypoints, response_hist);
 
-    	if(classes_training_data.count('bike') == 0) { //not yet created...
-        	classes_training_data['bike'].create(0,response_hist.cols,response_hist.type());
-        	classes_names.push_back('bike');
+    	if(classes_training_data.count("bike") == 0) { //not yet created...
+        	classes_training_data["bike"].create(0,response_hist.cols,response_hist.type());
+        	classes_names.push_back("bike");
       	}
-      	classes_training_data['bike'].push_back(response_hist);
+      	classes_training_data["bike"].push_back(response_hist);
    		//total_samples++;
 	}
 	//------------------------------
@@ -141,7 +142,7 @@ int main(int argc, char* argv[])
    		string class_ = classes_names[i];
    		cout << " training class: " << class_ << ".." << endl;
          
-   		Mat samples(0,response_cols,response_type);
+   		Mat samples(0,response_hist.cols,response_hist.type());
    		Mat labels(0,1,CV_32FC1);
          
   		//copy class samples and label
@@ -160,7 +161,8 @@ int main(int argc, char* argv[])
    		}
     
    		cout << "Train.." << endl;
-   		Mat samples_32f; samples.convertTo(samples_32f, CV_32F);
+   		Mat samples_32f; 
+   		samples.convertTo(samples_32f, CV_32F);
    		if(samples.rows == 0) continue; //phantom class?!
    		CvSVM classifier; 
    		classifier.train(samples_32f,labels);

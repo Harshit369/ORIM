@@ -9,11 +9,15 @@
 /home/harshit/ORIM/main.cpp
 stdio.h
 -
+map
+-
 opencv/cv.h
 -
 opencv/highgui.h
 -
 opencv2/nonfree/features2d.hpp
+-
+opencv2/ml/ml.hpp
 -
 
 /usr/local/include/opencv/cv.h
@@ -668,6 +672,18 @@ opencv2/imgproc/types_c.h
 math.h
 -
 string.h
+-
+
+/usr/local/include/opencv2/ml/ml.hpp
+opencv2/core/core.hpp
+/usr/local/include/opencv2/ml/opencv2/core/core.hpp
+limits.h
+-
+map
+-
+string
+-
+iostream
 -
 
 /usr/local/include/opencv2/nonfree/features2d.hpp
