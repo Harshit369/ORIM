@@ -102,6 +102,9 @@ int main(int argc, char* argv[])
 	//Set the dictionary with the vocabulary we created in the first step
 	bowide->setVocabulary(dictionary);
 
+
+
+	// adds histograam data to the hash table corresponding to plane and bike class
 	for(int f=100;f<=800;f+=10) {
 
 		sprintf(filenameplane,"./dataset/training/airplanes_side/0%i.jpg",f);
@@ -130,6 +133,39 @@ int main(int argc, char* argv[])
       	}
       	classes_training_data['bike'].push_back(response_hist);
    		//total_samples++;
+	}
+	//------------------------------
+
+
+	for (int i=0;i<classes_names.size();i++) {
+   		string class_ = classes_names[i];
+   		cout << " training class: " << class_ << ".." << endl;
+         
+   		Mat samples(0,response_cols,response_type);
+   		Mat labels(0,1,CV_32FC1);
+         
+  		//copy class samples and label
+   		cout << "adding " << classes_training_data[class_].rows << " positive" << endl;
+   		samples.push_back(classes_training_data[class_]);
+   		Mat class_label = Mat::ones(classes_training_data[class_].rows, 1, CV_32FC1);
+   		labels.push_back(class_label);
+         
+   		//copy rest samples and label
+   		for (map<string,Mat>::iterator it1 = classes_training_data.begin(); it1 != classes_training_data.end(); ++it1) {
+      		string not_class_ = (*it1).first;
+      		if(not_class_.compare(class_)==0) continue; //skip class itself
+      		samples.push_back(classes_training_data[not_class_]);
+      		class_label = Mat::zeros(classes_training_data[not_class_].rows, 1, CV_32FC1);
+      		labels.push_back(class_label);
+   		}
+    
+   		cout << "Train.." << endl;
+   		Mat samples_32f; samples.convertTo(samples_32f, CV_32F);
+   		if(samples.rows == 0) continue; //phantom class?!
+   		CvSVM classifier; 
+   		classifier.train(samples_32f,labels);
+ 
+   		//do something with the classifier, like saving it to file
 	}
 
 #endif
