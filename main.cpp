@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <map>
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 #include <opencv2/nonfree/features2d.hpp>
@@ -72,14 +73,23 @@ int main(int argc, char* argv[])
 	fs << "descriptors" << dictionary;
 	fs.release();
 
-#else
-	//Step 2 - Obtain the BoF descriptor for given image/video frame. 
+	//Step 2 - Obtain the BoF descriptor for given image and train svm according to it. 
 
     //prepare BOW descriptor extractor from the dictionary    
 	Mat dictionary; 
-	FileStorage fs("dictionary.yml", FileStorage::READ);
-	fs["vocabulary"] >> dictionary;
-	fs.release();	
+	FileStorage fs1("dictionary.yml", FileStorage::READ);
+	fs1["vocabulary"] >> dictionary;
+	fs1.release();	
+
+	vector< KeyPoint > keypoints;
+	Mat response_hist;
+	Mat img;
+	map<string,Mat> classes_training_data;
+	vector< string > classes_names;
+	//To store the image file name
+	char * filename = new char[100];
+	//To store the image tag name - only for save the descriptor in a file
+	char * imageTag = new char[10];
     
 	//create a nearest neighbor matcher
 	Ptr<DescriptorMatcher> matcher(new FlannBasedMatcher);
@@ -88,44 +98,40 @@ int main(int argc, char* argv[])
 	//create Sift descriptor extractor
 	Ptr<DescriptorExtractor> extractor(new SiftDescriptorExtractor);	
 	//create BoF (or BoW) descriptor extractor
-	BOWImgDescriptorExtractor bowDE(extractor,matcher);
+	Ptr<BOWImgDescriptorExtractor> bowide(new BOWImgDescriptorExtractor(extractor,matcher));
 	//Set the dictionary with the vocabulary we created in the first step
-	bowDE.setVocabulary(dictionary);
+	bowide->setVocabulary(dictionary);
 
-	//To store the image file name
-	char * filename = new char[100];
-	//To store the image tag name - only for save the descriptor in a file
-	char * imageTag = new char[10];
+	for(int f=100;f<=800;f+=10) {
 
-	//open the file to write the resultant descriptor
-	FileStorage fs1("descriptor.yml", FileStorage::WRITE);	
-	
-	//the image file with the location. 
-	sprintf(filename,"./128.JPG");		
-	//read the image
-	Mat img=imread(filename,CV_LOAD_IMAGE_GRAYSCALE);		
-	//To store the keypoints that will be extracted by SIFT
-	vector<KeyPoint> keypoints;		
-	//Detect SIFT keypoints (or feature points)
-	detector->detect(img,keypoints);
-	//To store the BoW (or BoF) representation of the image
-	Mat bowDescriptor;		
-	//extract BoW (or BoF) descriptor from given image
-	bowDE.compute(img,keypoints,bowDescriptor);
+		sprintf(filenameplane,"./dataset/training/airplanes_side/0%i.jpg",f);
+   		img = imread(filenameplane);
+   		detector->detect(img,keypoints);
+   		bowide.compute(img, keypoints, response_hist);
 
-	//prepare the yml (some what similar to xml) file
-	sprintf(imageTag,"img1");			
-	//write the new BoF descriptor to the file
-	fs1 << imageTag << bowDescriptor;
-	//release the file storage
-	fs1.release();	
+    	if(classes_training_data.count('plane') == 0) { //not yet created...
+        	classes_training_data['plane'].create(0,response_hist.cols,response_hist.type());
+        	classes_names.push_back('plane');
+      	}
+      	classes_training_data['plane'].push_back(response_hist);
+   		//total_samples++;
+	}
 
-	//You may use this descriptor for classifying the image.
-	Mat image_yml_descriptor; 
-	FileStorage fs2("descriptor.yml", FileStorage::READ);
-	fs2["img1"] >> image_yml_descriptor;
-	fs2.release();
-	imshow( "Display Frame", image_yml_descriptor );
+	for(int f=100;f<=800;f+=10) {
+
+		sprintf(filenamebike,"./dataset/training/motorbikes_side/0%i.jpg",f);
+   		img = imread(filenamebike);
+   		detector->detect(img,keypoints);
+   		bowide.compute(img, keypoints, response_hist);
+
+    	if(classes_training_data.count('bike') == 0) { //not yet created...
+        	classes_training_data['bike'].create(0,response_hist.cols,response_hist.type());
+        	classes_names.push_back('bike');
+      	}
+      	classes_training_data['bike'].push_back(response_hist);
+   		//total_samples++;
+	}
+
 #endif
 	printf("\ndone\n");	
     return 0;
