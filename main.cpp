@@ -93,11 +93,11 @@ int main(int argc, char* argv[])
 	char * imageTag = new char[10];
     
 	//create a nearest neighbor matcher
-	Ptr<DescriptorMatcher> matcher(new FlannBasedMatcher);
+	Ptr<DescriptorMatcher> matcher(new FlannBasedMatcher());
 	//create Sift feature point extracter
 	Ptr<FeatureDetector> detector(new SiftFeatureDetector());
 	//create Sift descriptor extractor
-	Ptr<DescriptorExtractor> extractor(new SiftDescriptorExtractor);	
+	Ptr<DescriptorExtractor> extractor(new SiftDescriptorExtractor());	
 	//create BoF (or BoW) descriptor extractor
 	Ptr<BOWImgDescriptorExtractor> bowide(new BOWImgDescriptorExtractor(extractor,matcher));
 	//Set the dictionary with the vocabulary we created in the first step
