@@ -4,6 +4,7 @@
 #include <opencv/highgui.h>
 #include <opencv2/nonfree/features2d.hpp>
 #include <opencv2/ml/ml.hpp>
+#include <opencv2/legacy/legacy.hpp>
 
 using namespace cv;
 using namespace std;
@@ -25,11 +26,12 @@ int main(int argc, char* argv[])
 	//To store the keypoints that will be extracted by SIFT
 	vector<KeyPoint> keypointsplane,keypointsbike;
 	//To store the SIFT descriptor of current image
-	Mat descriptorplane,descriptorbike;
+	Mat descriptorplane,descriptorbike,descrplane,descrbike;
 	//To store all the descriptors that are extracted from all the images.
 	Mat allfeaturesUnclustered;
 	//The SIFT feature extractor and descriptor
-	SiftDescriptorExtractor detectorplane,detectorbike;	
+	SiftFeatureDetector detectorplane,detectorbike;
+	SiftDescriptorExtractor extractorplane,extractorbike;	
 	
 	//I select 75 training images 
 	for(int f=100;f<=800;f+=10){		
@@ -43,8 +45,8 @@ int main(int argc, char* argv[])
 		detectorplane.detect(inputplane, keypointsplane);
 		detectorbike.detect(inputbike, keypointsbike);
 		//compute the descriptors for each keypoint
-		detectorplane.compute(inputplane, keypointsplane,descriptorplane);
-		detectorbike.compute(inputbike, keypointsbike,descriptorbike);		
+		extractorplane.compute(inputplane, keypointsplane,descriptorplane);
+		extractorbike.compute(inputbike, keypointsbike,descriptorbike);		
 		//put the all feature descriptors in a single Mat object 
 
 		allfeaturesUnclustered.push_back(descriptorplane);		
@@ -53,7 +55,7 @@ int main(int argc, char* argv[])
 		printf("%i percent done\n",f/10);
 	}	
 
-
+	printf("done step1------\n");
 	//Construct BOWKMeansTrainer
 	//the number of bags
 	int dictionarySize=200;
@@ -66,13 +68,14 @@ int main(int argc, char* argv[])
 	//Create the BoW (or BoF) trainer
 	BOWKMeansTrainer bowTrainer(dictionarySize,tc,retries,flags);
 
-
+	
 	//cluster the feature vectors for all training set
 	Mat dictionarywrite = bowTrainer.cluster(allfeaturesUnclustered);	
 	//store the vocabulary
 	FileStorage fs("dictionary.yml", FileStorage::WRITE);
 	fs << "descriptors" << dictionarywrite;
 	fs.release();
+
 
 	//Step 2 - Obtain the BoF descriptor for given image and train svm according to it. 
 
@@ -81,6 +84,7 @@ int main(int argc, char* argv[])
 	FileStorage fs1("dictionary.yml", FileStorage::READ);
 	fs1["vocabulary"] >> dictionary;
 	fs1.release();	
+
 
 	vector< KeyPoint > keypoints;
 	Mat response_hist;
@@ -93,23 +97,26 @@ int main(int argc, char* argv[])
 	char * imageTag = new char[10];
     
 	//create a nearest neighbor matcher
-	Ptr<DescriptorMatcher> matcher(new FlannBasedMatcher());
+	Ptr<DescriptorMatcher> matcher = makePtr<FlannBasedMatcher>(makePtr<flann::LshIndexParams>(12, 20, 2));
+	//FlannBasedMatcher matcher;
+	//Ptr<DescriptorMatcher> matcher(new FlannBasedMatcher);
 	//create Sift feature point extracter
 	Ptr<FeatureDetector> detector(new SiftFeatureDetector());
 	//create Sift descriptor extractor
-	Ptr<DescriptorExtractor> extractor(new SiftDescriptorExtractor());	
+	Ptr<DescriptorExtractor> extractor(new SiftDescriptorExtractor);	
 	//create BoF (or BoW) descriptor extractor
 	Ptr<BOWImgDescriptorExtractor> bowide(new BOWImgDescriptorExtractor(extractor,matcher));
 	//Set the dictionary with the vocabulary we created in the first step
 	bowide->setVocabulary(dictionary);
 
+	printf("done step2-----\n");
 
 
 	// adds histograam data to the hash table corresponding to plane and bike class
 	for(int f=100;f<=800;f+=10) {
 
 		sprintf(filenameplane,"./dataset/training/airplanes_side/0%i.jpg",f);
-   		img = imread(filenameplane);
+   		img = imread(filenameplane,CV_LOAD_IMAGE_GRAYSCALE);
    		detector->detect(img,keypoints);
    		bowide->compute(img, keypoints, response_hist);
 
@@ -120,11 +127,12 @@ int main(int argc, char* argv[])
       	classes_training_data["plane"].push_back(response_hist);
    		//total_samples++;
 	}
+	printf("done step3---------\n");
 
 	for(int f=100;f<=800;f+=10) {
 
 		sprintf(filenamebike,"./dataset/training/motorbikes_side/0%i.jpg",f);
-   		img = imread(filenamebike);
+   		img = imread(filenamebike,CV_LOAD_IMAGE_GRAYSCALE);
    		detector->detect(img,keypoints);
    		bowide->compute(img, keypoints, response_hist);
 
@@ -136,6 +144,8 @@ int main(int argc, char* argv[])
    		//total_samples++;
 	}
 	//------------------------------
+
+	printf("done step4---------\n");
 
 
 	for (int i=0;i<classes_names.size();i++) {
@@ -169,6 +179,32 @@ int main(int argc, char* argv[])
  
    		//do something with the classifier, like saving it to file
 	}
+
+	//---------------------------------------------------------------------------
+
+	/*map<string,map<string,int> > confusion_matrix; // confusionMatrix[classA][classB] = number_of_times_A_voted_for_B;
+	map<string,CvSVM> classes_classifiers; //This we created earlier
+ 
+	vector<string> files; //load up with images
+	vector<string> classes; //load up with the respective classes
+ 
+	for(..loop over a directory?..) {
+   		Mat img = imread(files[i]),resposne_hist;
+    
+   		vector<KeyPoint> keypoints;
+   		detector->detect(img,keypoints);
+   		bowide->compute(img, keypoints, response_hist);
+ 
+   		float minf = FLT_MAX; string minclass;
+   		for (map<string,CvSVM>::iterator it = classes_classifiers.begin(); it != classes_classifiers.end(); ++it) {
+      		float res = (*it).second.predict(response_hist,true);
+      		if (res < minf) {
+         	minf = res;
+         	minclass = (*it).first;
+      		}
+   		}
+   		confusion_matrix[minclass][classes[i]]++;  
+	}*/
 
 #endif
 	printf("\ndone\n");	

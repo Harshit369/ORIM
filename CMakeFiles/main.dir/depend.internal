@@ -54,6 +54,7 @@ CMakeFiles/main.dir/main.cpp.o
  /usr/local/include/opencv2/imgproc/imgproc_c.h
  /usr/local/include/opencv2/imgproc/types_c.h
  /usr/local/include/opencv2/legacy/compat.hpp
+ /usr/local/include/opencv2/legacy/legacy.hpp
  /usr/local/include/opencv2/ml/ml.hpp
  /usr/local/include/opencv2/nonfree/features2d.hpp
  /usr/local/include/opencv2/objdetect/objdetect.hpp
