@@ -59,7 +59,7 @@ int main(int argc, char* argv[])
 	printf("-----------Training complete------\n\n");
 	//Construct BOWKMeansTrainer
 	//the number of bags
-	int dictionarySize=2;
+	int dictionarySize=200;
 	//define Term Criteria
 	TermCriteria tc(CV_TERMCRIT_ITER,100,0.001);
 	//retries number
@@ -140,7 +140,7 @@ int main(int argc, char* argv[])
 		sprintf(filenamebike,"./dataset/training/motorbikes_side/0%i.jpg",f);
 		
    		imgbike = imread(filenamebike,CV_LOAD_IMAGE_GRAYSCALE);
-   		
+
    		detector->detect(imgbike,keypointsb);
    		extractor->compute(imgbike,keypointsb,response_histbike);
    		bowide->compute(imgbike, keypointsb, response_histbike);
