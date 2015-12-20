@@ -90,7 +90,8 @@ int main(int argc, char* argv[])
 
 
 	vector< KeyPoint > keypointsp,keypointsb;
-	Mat response_histplane,response_histbike;
+	Mat response_histplane;
+	Mat response_histbike;
 	Mat imgplane,imgbike;
 	map<string,Mat> classes_training_data;
 	vector< string > classes_names;
@@ -135,7 +136,7 @@ int main(int argc, char* argv[])
 	//cout<<total_samples<<endl;
 	printf("-----------plane histograms hash created----------\n\n");
 
-	for(int f=100;f<=800;f+=10) {
+	/*for(int f=100;f<=800;f+=10) {
 
 		sprintf(filenamebike,"./dataset/training/motorbikes_side/0%i.jpg",f);
 		
@@ -152,7 +153,7 @@ int main(int argc, char* argv[])
       	classes_training_data["bike"].push_back(response_histbike);
    		//total_samples++;
 	}
-	printf("-----------bike histograms hash created----------\n\n");
+	printf("-----------bike histograms hash created----------\n\n");*/
 	//------------------------------
 
       	cout<<classes_training_data.size()<<endl;
@@ -190,13 +191,14 @@ int main(int argc, char* argv[])
 	}
 
 	//---------------------------------------------------------------------------
-
-	/*map<string,CvSVM> classes_classifiers; //This we created earlier
+	Mat resposne_histscene;
+	map<string,CvSVM> classes_classifiers; //This we created earlier
  
 	//vector<string> file; //load up with images
 	//vector<string> class1; //load up with the respective classes
  
-   	Mat img = imread(argv[1],CV_LOAD_IMAGE_GRAYSCALE),resposne_histscene;
+   	Mat img = imread(argv[1],CV_LOAD_IMAGE_GRAYSCALE);
+   	
     
    	vector<KeyPoint> keypoints;
    	detector->detect(img,keypoints);
