@@ -56,10 +56,10 @@ int main(int argc, char* argv[])
 		printf("%f percent training done\n",((float)f/(float)8));
 	}	
 
-	printf("-----------Training complete------\n");
+	printf("-----------Training complete------\n\n");
 	//Construct BOWKMeansTrainer
 	//the number of bags
-	int dictionarySize=200;
+	int dictionarySize=2;
 	//define Term Criteria
 	TermCriteria tc(CV_TERMCRIT_ITER,100,0.001);
 	//retries number
@@ -72,12 +72,12 @@ int main(int argc, char* argv[])
 	
 	//cluster the feature vectors for all training set
 	Mat dictionarywrite = bowTrainer.cluster(allfeaturesUnclustered);	
-	printf("-------------clusters created-------------------\n");
+	printf("-------------clusters created-------------------\n\n");
 	//store the vocabulary
 	FileStorage fs("dictionary.yml", FileStorage::WRITE);
 	fs << "descriptors" << dictionarywrite;
 	fs.release();
-	printf("-----------Dictionary of descriptors created---------------\n");
+	printf("-----------Dictionary of descriptors created---------------\n\n");
 
 
 	//Step 2 - Obtain the BoF descriptor for given image and train svm according to it. 
@@ -95,9 +95,7 @@ int main(int argc, char* argv[])
 	map<string,Mat> classes_training_data;
 	vector< string > classes_names;
 	//To store the image file name
-	char * filename = new char[100];
-	//To store the image tag name - only for save the descriptor in a file
-	char * imageTag = new char[10];
+	//char *filenameplane = new char[100];
     
 	//create a nearest neighbor matcher
 	//Ptr<DescriptorMatcher> matcher = makePtr<FlannBasedMatcher>(makePtr<flann::LshIndexParams>(12, 20, 2));
@@ -115,9 +113,9 @@ int main(int argc, char* argv[])
 	bowide->setVocabulary(dictionary);
 
 
-	printf("----------vocabulary loaded--------------\n");
+	printf("----------vocabulary loaded--------------\n\n");
 
-
+	int total_samples=0;
 	// adds histograam data to the hash table corresponding to plane and bike class
 	for(int f=100;f<=800;f+=10) {
 
@@ -132,19 +130,20 @@ int main(int argc, char* argv[])
         	classes_names.push_back("plane");
       	}
       	classes_training_data["plane"].push_back(response_histplane);
-   		//total_samples++;
+   		total_samples++;
 	}
-	
-	printf("-----------plane histograms created----------\n");
+	//cout<<total_samples<<endl;
+	printf("-----------plane histograms hash created----------\n\n");
 
-	/*for(int f=100;f<=800;f+=10) {
+	for(int f=100;f<=800;f+=10) {
 
 		sprintf(filenamebike,"./dataset/training/motorbikes_side/0%i.jpg",f);
+		
    		imgbike = imread(filenamebike,CV_LOAD_IMAGE_GRAYSCALE);
+   		
    		detector->detect(imgbike,keypointsb);
    		extractor->compute(imgbike,keypointsb,response_histbike);
    		bowide->compute(imgbike, keypointsb, response_histbike);
-   		printf("done step4.2-----\n");
 
     	if(classes_training_data.count("bike") == 0) { //not yet created...
         	classes_training_data["bike"].create(0,response_histbike.cols,response_histbike.type());
@@ -152,9 +151,12 @@ int main(int argc, char* argv[])
       	}
       	classes_training_data["bike"].push_back(response_histbike);
    		//total_samples++;
-	}*/
-	printf("-------step5 complete---------\n");
+	}
+	printf("-----------bike histograms hash created----------\n\n");
 	//------------------------------
+
+      	cout<<classes_training_data.size()<<endl;
+      	//cout<<classes_training_data["plane"].count()<<endl;
 
 	for (int i=0;i<classes_names.size();i++) {
    		string class_ = classes_names[i];
@@ -189,27 +191,28 @@ int main(int argc, char* argv[])
 
 	//---------------------------------------------------------------------------
 
-	map<string,map<string,int> > confusion_matrix; // confusionMatrix[classA][classB] = number_of_times_A_voted_for_B;
-	map<string,CvSVM> classes_classifiers; //This we created earlier
+	/*map<string,CvSVM> classes_classifiers; //This we created earlier
  
-	vector<string> files; //load up with images
-	vector<string> classes; //load up with the respective classes
+	//vector<string> file; //load up with images
+	//vector<string> class1; //load up with the respective classes
  
-   	Mat img = imread(argv[1],CV_LOAD_IMAGE_GRAYSCALE),resposne_hist;
+   	Mat img = imread(argv[1],CV_LOAD_IMAGE_GRAYSCALE),resposne_histscene;
     
    	vector<KeyPoint> keypoints;
    	detector->detect(img,keypoints);
-   	bowide->compute(img, keypoints, response_histplane);
+   	extractor->compute(img,keypoints,response_histscene);
+   	bowide->compute(img, keypoints, response_histscene);
  
    	float minf = FLT_MAX; string minclass;
    	for (map<string,CvSVM>::iterator it = classes_classifiers.begin(); it != classes_classifiers.end(); ++it) {
-    	float res = (*it).second.predict(response_histplane,true);
+    	float res = (*it).second.predict(response_histscene,true);
     	if (res < minf) {
          	minf = res;
          	minclass = (*it).first;
     	}
+    	cout<<res;
    	}
-   	//confusion_matrix[minclass][classes[]]++;  
+   	//confusion_matrix[minclass][classes[]]++; */ 
 	
 
 #endif
