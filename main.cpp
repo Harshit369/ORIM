@@ -72,7 +72,7 @@ int main(int argc, char* argv[])
 	
 	//cluster the feature vectors for all training set
 	Mat dictionarywrite = bowTrainer.cluster(allfeaturesUnclustered);	
-	printf("-------------     clusters created     -------------------\n");
+	printf("-------------clusters created-------------------\n");
 	//store the vocabulary
 	FileStorage fs("dictionary.yml", FileStorage::WRITE);
 	fs << "descriptors" << dictionarywrite;
@@ -89,9 +89,9 @@ int main(int argc, char* argv[])
 	fs1.release();	
 
 
-	vector< KeyPoint > keypoints;
-	Mat response_histogram,response_hist;
-	Mat img;
+	vector< KeyPoint > keypointsp,keypointsb;
+	Mat response_histplane,response_histbike;
+	Mat imgplane,imgbike;
 	map<string,Mat> classes_training_data;
 	vector< string > classes_names;
 	//To store the image file name
@@ -114,51 +114,53 @@ int main(int argc, char* argv[])
 	//Set the dictionary with the vocabulary we created in the first step
 	bowide->setVocabulary(dictionary);
 
+
 	printf("----------vocabulary loaded--------------\n");
 
 
 	// adds histograam data to the hash table corresponding to plane and bike class
 	for(int f=100;f<=800;f+=10) {
 
-		sprintf(filenameplane,"./dataset/training/airplanes_side/0%i.jpg",f);
-   		img = imread(filenameplane,CV_LOAD_IMAGE_GRAYSCALE);
-   		detector->detect(img,keypoints);
-   		
-   		bowide->compute(img, keypoints, response_hist);
-		printf("done step2.1-----\n");
+		
+   		sprintf(filenameplane,"./dataset/training/motorplane_side/0%i.jpg",f);
+   		imgplane = imread(filenameplane,CV_LOAD_IMAGE_GRAYSCALE);
+   		detector->detect(imgplane,keypointsp);
+   		extractor->compute(imgplane,keypointsp,response_histplane);
+   		bowide->compute(imgplane, keypointsp, response_histplane);
     	if(classes_training_data.count("plane") == 0) { //not yet created...
-        	classes_training_data["plane"].create(0,response_hist.cols,response_hist.type());
+        	classes_training_data["plane"].create(0,response_histplane.cols,response_histplane.type());
         	classes_names.push_back("plane");
       	}
-      	classes_training_data["plane"].push_back(response_hist);
+      	classes_training_data["plane"].push_back(response_histplane);
    		//total_samples++;
 	}
-	printf("done step3---------\n");
+	
+	printf("-----------plane histograms created----------\n");
 
-	for(int f=100;f<=800;f+=10) {
+	/*for(int f=100;f<=800;f+=10) {
 
 		sprintf(filenamebike,"./dataset/training/motorbikes_side/0%i.jpg",f);
-   		img = imread(filenamebike,CV_LOAD_IMAGE_GRAYSCALE);
-   		detector->detect(img,keypoints);
-   		bowide->compute(img, keypoints, response_hist);
+   		imgbike = imread(filenamebike,CV_LOAD_IMAGE_GRAYSCALE);
+   		detector->detect(imgbike,keypointsb);
+   		extractor->compute(imgbike,keypointsb,response_histbike);
+   		bowide->compute(imgbike, keypointsb, response_histbike);
+   		printf("done step4.2-----\n");
 
     	if(classes_training_data.count("bike") == 0) { //not yet created...
-        	classes_training_data["bike"].create(0,response_hist.cols,response_hist.type());
+        	classes_training_data["bike"].create(0,response_histbike.cols,response_histbike.type());
         	classes_names.push_back("bike");
       	}
-      	classes_training_data["bike"].push_back(response_hist);
+      	classes_training_data["bike"].push_back(response_histbike);
    		//total_samples++;
-	}
+	}*/
+	printf("-------step5 complete---------\n");
 	//------------------------------
-
-	printf("done step4---------\n");
-
 
 	for (int i=0;i<classes_names.size();i++) {
    		string class_ = classes_names[i];
    		cout << " training class: " << class_ << ".." << endl;
          
-   		Mat samples(0,response_hist.cols,response_hist.type());
+   		Mat samples(0,response_histplane.cols,response_histplane.type());
    		Mat labels(0,1,CV_32FC1);
          
   		//copy class samples and label
@@ -183,34 +185,32 @@ int main(int argc, char* argv[])
    		CvSVM classifier; 
    		classifier.train(samples_32f,labels);
  
-   		//do something with the classifier, like saving it to file
 	}
 
 	//---------------------------------------------------------------------------
 
-	/*map<string,map<string,int> > confusion_matrix; // confusionMatrix[classA][classB] = number_of_times_A_voted_for_B;
+	map<string,map<string,int> > confusion_matrix; // confusionMatrix[classA][classB] = number_of_times_A_voted_for_B;
 	map<string,CvSVM> classes_classifiers; //This we created earlier
  
 	vector<string> files; //load up with images
 	vector<string> classes; //load up with the respective classes
  
-	for(..loop over a directory?..) {
-   		Mat img = imread(files[i]),resposne_hist;
+   	Mat img = imread(argv[1],CV_LOAD_IMAGE_GRAYSCALE),resposne_hist;
     
-   		vector<KeyPoint> keypoints;
-   		detector->detect(img,keypoints);
-   		bowide->compute(img, keypoints, response_hist);
+   	vector<KeyPoint> keypoints;
+   	detector->detect(img,keypoints);
+   	bowide->compute(img, keypoints, response_histplane);
  
-   		float minf = FLT_MAX; string minclass;
-   		for (map<string,CvSVM>::iterator it = classes_classifiers.begin(); it != classes_classifiers.end(); ++it) {
-      		float res = (*it).second.predict(response_hist,true);
-      		if (res < minf) {
+   	float minf = FLT_MAX; string minclass;
+   	for (map<string,CvSVM>::iterator it = classes_classifiers.begin(); it != classes_classifiers.end(); ++it) {
+    	float res = (*it).second.predict(response_histplane,true);
+    	if (res < minf) {
          	minf = res;
          	minclass = (*it).first;
-      		}
-   		}
-   		confusion_matrix[minclass][classes[i]]++;  
-	}*/
+    	}
+   	}
+   	//confusion_matrix[minclass][classes[]]++;  
+	
 
 #endif
 	printf("\ndone\n");	
