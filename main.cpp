@@ -87,7 +87,7 @@ int main(int argc, char* argv[])
 
 
 	vector< KeyPoint > keypoints;
-	Mat response_hist;
+	Mat response_histogram,response_hist;
 	Mat img;
 	map<string,Mat> classes_training_data;
 	vector< string > classes_names;
@@ -97,14 +97,16 @@ int main(int argc, char* argv[])
 	char * imageTag = new char[10];
     
 	//create a nearest neighbor matcher
-	Ptr<DescriptorMatcher> matcher = makePtr<FlannBasedMatcher>(makePtr<flann::LshIndexParams>(12, 20, 2));
+	//Ptr<DescriptorMatcher> matcher = makePtr<FlannBasedMatcher>(makePtr<flann::LshIndexParams>(12, 20, 2));
+	//Ptr<DescriptorMatcher > matcher(new BruteForceMatcher<L2<float> >());
 	//FlannBasedMatcher matcher;
-	//Ptr<DescriptorMatcher> matcher(new FlannBasedMatcher);
+	Ptr<DescriptorMatcher> matcher(new FlannBasedMatcher);
 	//create Sift feature point extracter
 	Ptr<FeatureDetector> detector(new SiftFeatureDetector());
 	//create Sift descriptor extractor
 	Ptr<DescriptorExtractor> extractor(new SiftDescriptorExtractor);	
 	//create BoF (or BoW) descriptor extractor
+	//BOWImgDescriptorExtractor bowide(extractor,matcher);
 	Ptr<BOWImgDescriptorExtractor> bowide(new BOWImgDescriptorExtractor(extractor,matcher));
 	//Set the dictionary with the vocabulary we created in the first step
 	bowide->setVocabulary(dictionary);
@@ -118,8 +120,9 @@ int main(int argc, char* argv[])
 		sprintf(filenameplane,"./dataset/training/airplanes_side/0%i.jpg",f);
    		img = imread(filenameplane,CV_LOAD_IMAGE_GRAYSCALE);
    		detector->detect(img,keypoints);
+   		response_histogram.convertTo(response_hist, CV_32F);
    		bowide->compute(img, keypoints, response_hist);
-
+		printf("done step2.1-----\n");
     	if(classes_training_data.count("plane") == 0) { //not yet created...
         	classes_training_data["plane"].create(0,response_hist.cols,response_hist.type());
         	classes_names.push_back("plane");
