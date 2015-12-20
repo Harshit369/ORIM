@@ -44,6 +44,7 @@ int main(int argc, char* argv[])
 		//detect feature points
 		detectorplane.detect(inputplane, keypointsplane);
 		detectorbike.detect(inputbike, keypointsbike);
+		
 		//compute the descriptors for each keypoint
 		extractorplane.compute(inputplane, keypointsplane,descriptorplane);
 		extractorbike.compute(inputbike, keypointsbike,descriptorbike);		
@@ -52,10 +53,10 @@ int main(int argc, char* argv[])
 		allfeaturesUnclustered.push_back(descriptorplane);		
 		allfeaturesUnclustered.push_back(descriptorbike);		
 		//print the percentage
-		printf("%i percent done\n",f/10);
+		printf("%f percent training done\n",((float)f/(float)8));
 	}	
 
-	printf("done step1------\n");
+	printf("-----------Training complete------\n");
 	//Construct BOWKMeansTrainer
 	//the number of bags
 	int dictionarySize=200;
@@ -71,10 +72,12 @@ int main(int argc, char* argv[])
 	
 	//cluster the feature vectors for all training set
 	Mat dictionarywrite = bowTrainer.cluster(allfeaturesUnclustered);	
+	printf("-------------     clusters created     -------------------\n");
 	//store the vocabulary
 	FileStorage fs("dictionary.yml", FileStorage::WRITE);
 	fs << "descriptors" << dictionarywrite;
 	fs.release();
+	printf("-----------Dictionary of descriptors created---------------\n");
 
 
 	//Step 2 - Obtain the BoF descriptor for given image and train svm according to it. 
@@ -98,7 +101,7 @@ int main(int argc, char* argv[])
     
 	//create a nearest neighbor matcher
 	//Ptr<DescriptorMatcher> matcher = makePtr<FlannBasedMatcher>(makePtr<flann::LshIndexParams>(12, 20, 2));
-	//Ptr<DescriptorMatcher > matcher(new BruteForceMatcher<L2<float> >());
+	//Ptr<DescriptorMatcher > matcher(new BruteForceMatcher<L2<uchar> >());
 	//FlannBasedMatcher matcher;
 	Ptr<DescriptorMatcher> matcher(new FlannBasedMatcher);
 	//create Sift feature point extracter
@@ -111,7 +114,7 @@ int main(int argc, char* argv[])
 	//Set the dictionary with the vocabulary we created in the first step
 	bowide->setVocabulary(dictionary);
 
-	printf("done step2-----\n");
+	printf("----------vocabulary loaded--------------\n");
 
 
 	// adds histograam data to the hash table corresponding to plane and bike class
@@ -120,7 +123,7 @@ int main(int argc, char* argv[])
 		sprintf(filenameplane,"./dataset/training/airplanes_side/0%i.jpg",f);
    		img = imread(filenameplane,CV_LOAD_IMAGE_GRAYSCALE);
    		detector->detect(img,keypoints);
-   		response_histogram.convertTo(response_hist, CV_32F);
+   		
    		bowide->compute(img, keypoints, response_hist);
 		printf("done step2.1-----\n");
     	if(classes_training_data.count("plane") == 0) { //not yet created...
