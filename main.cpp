@@ -91,7 +91,7 @@ int main(int argc, char* argv[])
 
 	vector< KeyPoint > keypointsp,keypointsb;
 	Mat response_histplane;
-	Mat response_histbike;
+	Mat response_hist;
 	Mat imgplane,imgbike;
 	map<string,Mat> classes_training_data;
 	vector< string > classes_names;
@@ -181,7 +181,7 @@ int main(int argc, char* argv[])
       		labels.push_back(class_label);
    		}
     
-   		cout << "Train.." << endl;
+   		cout << "Trained.." << endl;
    		Mat samples_32f; 
    		samples.convertTo(samples_32f, CV_32F);
    		if(samples.rows == 0) continue; //phantom class?!
@@ -202,12 +202,12 @@ int main(int argc, char* argv[])
     
    	vector<KeyPoint> keypoints;
    	detector->detect(img,keypoints);
-   	extractor->compute(img,keypoints,response_histscene);
-   	bowide->compute(img, keypoints, response_histscene);
+   	extractor->compute(img,keypoints,response_hist);
+   	bowide->compute(img, keypoints, response_hist);
  
    	float minf = FLT_MAX; string minclass;
    	for (map<string,CvSVM>::iterator it = classes_classifiers.begin(); it != classes_classifiers.end(); ++it) {
-    	float res = (*it).second.predict(response_histscene,true);
+    	float res = (*it).second.predict(response_hist,true);
     	if (res < minf) {
          	minf = res;
          	minclass = (*it).first;
